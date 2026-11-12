@@ -1,0 +1,62 @@
+{
+ "setup": {
+  "T": 256,
+  "train": 4000,
+  "test": 800,
+  "steps": 10000,
+  "batch": 32,
+  "periods": "20..60",
+  "drop": 0.1,
+  "insert": 0.01,
+  "laps": "13..64",
+  "K": 3,
+  "tau": 32.0,
+  "theta": 12.0
+ },
+ "models": {
+  "organ alone (gated): best ring's echo, no model": {
+   "steady_F1": 0.7505207978759616,
+   "steady_F1_vs_clean": 0.8325824078004957,
+   "rhythm_bands_F1_vs_clean": 0.9130590068011702,
+   "fill_band_F1_vs_clean": 0.09953623589672596,
+   "recovery_F1": 0.4224135076974011,
+   "params": 0
+  },
+  "organ alone (plain): best ring's echo, no model": {
+   "steady_F1": 0.7497263003284396,
+   "steady_F1_vs_clean": 0.8315653405010567,
+   "rhythm_bands_F1_vs_clean": 0.9124939231891104,
+   "fill_band_F1_vs_clean": 0.09997939984893223,
+   "recovery_F1": 0.4231494656033884,
+   "params": 0
+  },
+  "reference: knows the true period, copies the clean last lap": {
+   "steady_F1": 0.8310917126164707,
+   "steady_F1_vs_clean": 0.9244732532375487,
+   "rhythm_bands_F1_vs_clean": 1.0,
+   "params": 0
+  },
+  "transformer, window 64": {
+   "steady_F1": 0.2810622826430604,
+   "steady_F1_vs_clean": 0.3003784942313831,
+   "rhythm_bands_F1_vs_clean": 0.19973967577801444,
+   "fill_band_F1_vs_clean": 0.9570215321266192,
+   "recovery_F1": 0.1833772896940349,
+   "params": 48248,
+   "train_seconds": 670,
+   "final_loss": 0.317,
+   "attention_share_on_organ_tokens_per_layer": null
+  },
+  "GRU, hidden 96": {
+   "steady_F1": 0.14191106906338694,
+   "steady_F1_vs_clean": 0.14331798997794126,
+   "rhythm_bands_F1_vs_clean": 0.0,
+   "fill_band_F1_vs_clean": 0.9606016579779506,
+   "recovery_F1": 0.14557214235355423,
+   "params": 31304,
+   "train_seconds": 607,
+   "final_loss": 0.3395,
+   "attention_share_on_organ_tokens_per_layer": null
+  }
+ }
+}

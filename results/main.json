@@ -1,0 +1,115 @@
+{
+ "setup": {
+  "T": 256,
+  "train": 4000,
+  "test": 800,
+  "steps": 2500,
+  "batch": 32,
+  "periods": "20..60",
+  "drop": 0.1,
+  "insert": 0.01,
+  "laps": "13..64",
+  "K": 3,
+  "tau": 32.0,
+  "theta": 12.0
+ },
+ "models": {
+  "organ alone (gated): best ring's echo, no model": {
+   "steady_F1": 0.7505207978759616,
+   "steady_F1_vs_clean": 0.8325824078004957,
+   "rhythm_bands_F1_vs_clean": 0.9130590068011702,
+   "fill_band_F1_vs_clean": 0.09953623589672596,
+   "recovery_F1": 0.4224135076974011,
+   "params": 0
+  },
+  "organ alone (plain): best ring's echo, no model": {
+   "steady_F1": 0.7497263003284396,
+   "steady_F1_vs_clean": 0.8315653405010567,
+   "rhythm_bands_F1_vs_clean": 0.9124939231891104,
+   "fill_band_F1_vs_clean": 0.09997939984893223,
+   "recovery_F1": 0.4231494656033884,
+   "params": 0
+  },
+  "reference: knows the true period, copies the clean last lap": {
+   "steady_F1": 0.8310917126164707,
+   "steady_F1_vs_clean": 0.9244732532375487,
+   "rhythm_bands_F1_vs_clean": 1.0,
+   "params": 0
+  },
+  "transformer, window 12": {
+   "steady_F1": 0.1417741955828004,
+   "steady_F1_vs_clean": 0.14315402955388676,
+   "rhythm_bands_F1_vs_clean": 0.0,
+   "fill_band_F1_vs_clean": 0.9590843085333561,
+   "recovery_F1": 0.14501640248949935,
+   "params": 48248,
+   "train_seconds": 176,
+   "final_loss": 0.3378,
+   "attention_share_on_organ_tokens_per_layer": null
+  },
+  "transformer, window 12 + ring organ (gated)": {
+   "steady_F1": 0.8262160950459538,
+   "steady_F1_vs_clean": 0.9141814184237231,
+   "rhythm_bands_F1_vs_clean": 0.910662425667266,
+   "fill_band_F1_vs_clean": 0.9531755491231058,
+   "recovery_F1": 0.5454169253051935,
+   "params": 49160,
+   "train_seconds": 316,
+   "final_loss": 0.2213,
+   "attention_share_on_organ_tokens_per_layer": [
+    0.581,
+    0.639
+   ]
+  },
+  "transformer, window 12 + ring organ (plain copy)": {
+   "steady_F1": 0.826159184102618,
+   "steady_F1_vs_clean": 0.9138396666126064,
+   "rhythm_bands_F1_vs_clean": 0.910354583756189,
+   "fill_band_F1_vs_clean": 0.952421482679377,
+   "recovery_F1": 0.5460163415403697,
+   "params": 49160,
+   "train_seconds": 329,
+   "final_loss": 0.2212,
+   "attention_share_on_organ_tokens_per_layer": [
+    0.567,
+    0.628
+   ]
+  },
+  "transformer, window 12 + organ with random laps": {
+   "steady_F1": 0.22873586453737946,
+   "steady_F1_vs_clean": 0.24175665773763047,
+   "rhythm_bands_F1_vs_clean": 0.125,
+   "fill_band_F1_vs_clean": 0.95825117873982,
+   "recovery_F1": 0.1692171909826624,
+   "params": 49160,
+   "train_seconds": 311,
+   "final_loss": 0.332,
+   "attention_share_on_organ_tokens_per_layer": [
+    0.307,
+    0.568
+   ]
+  },
+  "transformer, window 64": {
+   "steady_F1": 0.14194362111370373,
+   "steady_F1_vs_clean": 0.14324872190420337,
+   "rhythm_bands_F1_vs_clean": 0.0,
+   "fill_band_F1_vs_clean": 0.9594398428827599,
+   "recovery_F1": 0.14537539470860542,
+   "params": 48248,
+   "train_seconds": 162,
+   "final_loss": 0.3319,
+   "attention_share_on_organ_tokens_per_layer": null
+  },
+  "GRU, hidden 96": {
+   "steady_F1": 0.1423599727637253,
+   "steady_F1_vs_clean": 0.14372020698972698,
+   "rhythm_bands_F1_vs_clean": 0.0,
+   "fill_band_F1_vs_clean": 0.9611319468121378,
+   "recovery_F1": 0.14600217547837543,
+   "params": 31304,
+   "train_seconds": 157,
+   "final_loss": 0.3377,
+   "attention_share_on_organ_tokens_per_layer": null
+  }
+ }
+}

@@ -1,0 +1,89 @@
+data 101s
+  transformer, window 64                             step 0 loss 0.8371
+  transformer, window 64                             step 500 loss 0.3464
+  transformer, window 64                             step 1000 loss 0.3342
+  transformer, window 64                             step 1500 loss 0.3392
+  transformer, window 64                             step 2000 loss 0.3348
+  transformer, window 64                             step 2500 loss 0.3396
+  transformer, window 64                             step 3000 loss 0.3197
+  transformer, window 64                             step 3500 loss 0.3107
+  transformer, window 64                             step 4000 loss 0.3217
+  transformer, window 64                             step 4500 loss 0.3180
+  transformer, window 64                             step 5000 loss 0.3178
+  transformer, window 64                             step 5500 loss 0.3239
+  transformer, window 64                             step 6000 loss 0.3118
+  transformer, window 64                             step 6500 loss 0.3134
+  transformer, window 64                             step 7000 loss 0.3219
+  transformer, window 64                             step 7500 loss 0.3118
+  transformer, window 64                             step 8000 loss 0.3084
+  transformer, window 64                             step 8500 loss 0.3107
+  transformer, window 64                             step 9000 loss 0.3136
+  transformer, window 64                             step 9500 loss 0.3077
+transformer, window 64 {'steady_F1': 0.281, 'steady_F1_vs_clean': 0.3, 'rhythm_bands_F1_vs_clean': 0.2, 'fill_band_F1_vs_clean': 0.957, 'recovery_F1': 0.183, 'params': 48248, 'train_seconds': 670, 'final_loss': 0.317, 'attention_share_on_organ_tokens_per_layer': None}
+  GRU, hidden 96                                     step 0 loss 0.6877
+  GRU, hidden 96                                     step 500 loss 0.3617
+  GRU, hidden 96                                     step 1000 loss 0.3397
+  GRU, hidden 96                                     step 1500 loss 0.3438
+  GRU, hidden 96                                     step 2000 loss 0.3421
+  GRU, hidden 96                                     step 2500 loss 0.3467
+  GRU, hidden 96                                     step 3000 loss 0.3453
+  GRU, hidden 96                                     step 3500 loss 0.3374
+  GRU, hidden 96                                     step 4000 loss 0.3441
+  GRU, hidden 96                                     step 4500 loss 0.3449
+  GRU, hidden 96                                     step 5000 loss 0.3444
+  GRU, hidden 96                                     step 5500 loss 0.3516
+  GRU, hidden 96                                     step 6000 loss 0.3350
+  GRU, hidden 96                                     step 6500 loss 0.3427
+  GRU, hidden 96                                     step 7000 loss 0.3520
+  GRU, hidden 96                                     step 7500 loss 0.3382
+  GRU, hidden 96                                     step 8000 loss 0.3342
+  GRU, hidden 96                                     step 8500 loss 0.3415
+  GRU, hidden 96                                     step 9000 loss 0.3459
+  GRU, hidden 96                                     step 9500 loss 0.3355
+GRU, hidden 96 {'steady_F1': 0.142, 'steady_F1_vs_clean': 0.143, 'rhythm_bands_F1_vs_clean': 0.0, 'fill_band_F1_vs_clean': 0.961, 'recovery_F1': 0.146, 'params': 31304, 'train_seconds': 607, 'final_loss': 0.34, 'attention_share_on_organ_tokens_per_layer': None}
+{
+ "organ alone (gated): best ring's echo, no model": {
+  "steady_F1": 0.751,
+  "steady_F1_vs_clean": 0.833,
+  "rhythm_bands_F1_vs_clean": 0.913,
+  "fill_band_F1_vs_clean": 0.1,
+  "recovery_F1": 0.422,
+  "params": 0
+ },
+ "organ alone (plain): best ring's echo, no model": {
+  "steady_F1": 0.75,
+  "steady_F1_vs_clean": 0.832,
+  "rhythm_bands_F1_vs_clean": 0.912,
+  "fill_band_F1_vs_clean": 0.1,
+  "recovery_F1": 0.423,
+  "params": 0
+ },
+ "reference: knows the true period, copies the clean last lap": {
+  "steady_F1": 0.831,
+  "steady_F1_vs_clean": 0.924,
+  "rhythm_bands_F1_vs_clean": 1.0,
+  "params": 0
+ },
+ "transformer, window 64": {
+  "steady_F1": 0.281,
+  "steady_F1_vs_clean": 0.3,
+  "rhythm_bands_F1_vs_clean": 0.2,
+  "fill_band_F1_vs_clean": 0.957,
+  "recovery_F1": 0.183,
+  "params": 48248,
+  "train_seconds": 670,
+  "final_loss": 0.317,
+  "attention_share_on_organ_tokens_per_layer": null
+ },
+ "GRU, hidden 96": {
+  "steady_F1": 0.142,
+  "steady_F1_vs_clean": 0.143,
+  "rhythm_bands_F1_vs_clean": 0.0,
+  "fill_band_F1_vs_clean": 0.961,
+  "recovery_F1": 0.146,
+  "params": 31304,
+  "train_seconds": 607,
+  "final_loss": 0.34,
+  "attention_share_on_organ_tokens_per_layer": null
+ }
+}

@@ -1,0 +1,367 @@
+<title>Korva</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: instrument bench. Wide stream on the left (what happened vs what each model expected),
+   the organ's comb and the scores on the right, the trained results underneath. */
+:root {
+  --bg: #f3f5f2; --panel: #fbfcfa; --fg: #18211d; --muted: #5a6862; --line: #d3dbd6; --grid: #e6ebe7;
+  --ink: #26332d; --organ: #0b8a74; --organ-soft: #cdebe4; --plain: #7b55c9; --plain-soft: #e5dcf6;
+  --miss: #c8553d; --fill: #c58a14; --window: rgba(123, 85, 201, .10);
+  --display: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --body: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0e1412; --panel: #141c19; --fg: #e3ebe7; --muted: #92a39b; --line: #27332e; --grid: #1c2622;
+  --ink: #d6e2dc; --organ: #3fd0b2; --organ-soft: #173b33; --plain: #a98af0; --plain-soft: #2b2342;
+  --miss: #f07d63; --fill: #e5b04a; --window: rgba(169, 138, 240, .13); color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0e1412; --panel: #141c19; --fg: #e3ebe7; --muted: #92a39b; --line: #27332e; --grid: #1c2622;
+  --ink: #d6e2dc; --organ: #3fd0b2; --organ-soft: #173b33; --plain: #a98af0; --plain-soft: #2b2342;
+  --miss: #f07d63; --fill: #e5b04a; --window: rgba(169, 138, 240, .13); color-scheme: dark }
+* { box-sizing: border-box }
+[hidden] { display: none !important }
+body { background: var(--bg); color: var(--fg); font: 15px/1.55 var(--body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 22px 48px }
+.wrap { max-width: 1180px; margin: 0 auto; display: grid; gap: 16px }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0 }
+h1 { font-size: clamp(28px, 4.2vw, 42px); letter-spacing: -.02em; line-height: 1.05 }
+h2 { font-size: 17px; letter-spacing: -.01em }
+.lede { color: var(--muted); max-width: 72ch; margin: 6px 0 0 }
+.lede b { color: var(--fg); font-weight: 600 }
+.bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden }
+.seg button { border: 0; border-right: 1px solid var(--line); border-radius: 0 }
+.seg button:last-child { border-right: 0 }
+button, .filelabel { font: 500 13px var(--body); color: var(--fg); background: var(--panel); border: 1px solid var(--line);
+  border-radius: 10px; padding: 8px 12px; cursor: pointer }
+button[aria-pressed="true"] { background: var(--fg); color: var(--bg) }
+button:focus-visible, .filelabel:focus-within { outline: 2px solid var(--organ); outline-offset: 2px }
+.filelabel input { position: absolute; opacity: 0; width: 1px; height: 1px }
+.check { display: inline-flex; gap: 6px; align-items: center; font-size: 13px; color: var(--muted) }
+.check input { accent-color: var(--organ) }
+.status { font-size: 13px; color: var(--muted); min-height: 1.5em }
+.grid { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); gap: 16px; align-items: start }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 14px; min-width: 0; display: grid; gap: 10px }
+.head { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; flex-wrap: wrap }
+.sub { font-size: 12.5px; color: var(--muted) }
+canvas { width: 100%; display: block }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12px; color: var(--muted) }
+.sw { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px }
+.scores { display: grid; grid-template-columns: auto 1fr 1fr; gap: 6px 12px; font-size: 13px; align-items: baseline }
+.scores .h { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted) }
+.num { font-family: var(--mono); font-variant-numeric: tabular-nums; font-size: 15px }
+.num.organ { color: var(--organ) } .num.plain { color: var(--plain) }
+.pads { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 6px }
+.pads button { padding: 14px 0; font-family: var(--mono) }
+.pads button.lit { background: var(--organ-soft) }
+.kv { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 13px; color: var(--muted) }
+.kv b { font-family: var(--mono); color: var(--fg); font-weight: 600 }
+table { border-collapse: collapse; width: 100%; font-size: 13px }
+th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--line); vertical-align: top }
+th { font-size: 11px; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); font-weight: 600 }
+td.n { font-family: var(--mono); font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap }
+tr.key td { background: var(--organ-soft) }
+.tablewrap { overflow-x: auto }
+.findings { margin: 0; padding-left: 18px; display: grid; gap: 4px; font-size: 13.5px; color: var(--muted); max-width: 95ch }
+.findings b { color: var(--fg); font-weight: 600 }
+.notes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; font-size: 13.5px; color: var(--muted) }
+.notes h3 { font-size: 14px; color: var(--fg); margin-bottom: 4px }
+.notes p { margin: 0 }
+@media (max-width: 860px) { .grid, .notes { grid-template-columns: 1fr } }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important } }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Korva <span style="font-weight:500;color:var(--muted)">· a ring organ for a tiny transformer</span></h1>
+    <p class="lede">Two tiny transformers, trained, each seeing only the <b>last 12 ticks</b>. One also gets a <b>ring organ</b>: a comb of 52 delay rings (laps 13 to 64 ticks) that carries the past forward and tells attention which lap the rhythm repeats on. Rhythms here repeat every 20 to 60 ticks, longer than the window. Watch what each model expects next.</p>
+  </header>
+
+  <div class="bar" role="toolbar" aria-label="Source and controls">
+    <div class="seg" role="group" aria-label="Source">
+      <button id="srcDemo" aria-pressed="true">Demo song</button>
+      <button id="srcTap" aria-pressed="false">Tap a rhythm</button>
+      <button id="srcAudio" aria-pressed="false">Audio file</button>
+    </div>
+    <button id="btnNew">New song</button>
+    <button id="btnPause">Pause</button>
+    <button id="btnFast" aria-pressed="false">Fast ×4</button>
+    <label class="check"><input type="checkbox" id="chkDrop" checked> Dropped and stray beats</label>
+    <label class="check"><input type="checkbox" id="chkChange"> Pattern changes every 200 ticks</label>
+    <label class="filelabel" id="fileWrap" hidden>Choose audio…<input type="file" id="file" accept="audio/*"></label>
+  </div>
+  <div class="status" id="status" role="status"></div>
+
+  <div class="pads" id="pads" hidden aria-label="Tap pads, or keys A S D F J K L ;"></div>
+
+  <div class="grid">
+    <section class="panel" aria-labelledby="h-stream">
+      <div class="head"><h2 id="h-stream">What happened, and what each model expected</h2><span class="sub">8 bands × last 96 ticks, newest on the right</span></div>
+      <canvas id="cStream" width="1200" height="610" aria-label="Three rasters: actual beats, organ model predictions, plain model predictions"></canvas>
+      <div class="legend">
+        <span><i class="sw" style="background:var(--ink)"></i>beat</span>
+        <span><i class="sw" style="background:var(--fill)"></i>fill (band 8, not periodic)</span>
+        <span><i class="sw" style="background:var(--organ)"></i>organ model: expected and it came</span>
+        <span><i class="sw" style="background:var(--plain)"></i>plain model: expected and it came</span>
+        <span><i class="sw" style="border:2px solid var(--miss)"></i>expected, did not come</span>
+        <span><i class="sw" style="background:var(--window)"></i>what attention can see</span>
+      </div>
+    </section>
+
+    <div style="display:grid;gap:16px;min-width:0">
+      <section class="panel" aria-labelledby="h-organ">
+        <div class="head"><h2 id="h-organ">The organ</h2><span class="sub">slow surprise of each ring by lap length; low means in tune</span></div>
+        <canvas id="cComb" width="760" height="300" aria-label="Bar chart of each ring's slow surprise by lap length"></canvas>
+        <div class="kv"><span>listening to laps <b id="kvLaps">–</b></span><span id="kvTrueWrap">true period <b id="kvTrue">–</b></span><span>attention on organ tokens <b id="kvShare">–</b></span></div>
+      </section>
+      <section class="panel" aria-labelledby="h-score">
+        <div class="head"><h2 id="h-score">Scores, last 256 ticks</h2><span class="sub" id="scoreSub">F1 of next-tick predictions</span></div>
+        <div class="scores">
+          <span class="h"></span><span class="h">transformer + organ</span><span class="h">transformer alone</span>
+          <span>Rhythm bands 1–7</span><span class="num organ" id="sOrgR">–</span><span class="num plain" id="sPlR">–</span>
+          <span>Fill band 8</span><span class="num organ" id="sOrgF">–</span><span class="num plain" id="sPlF">–</span>
+        </div>
+        <p class="sub" id="scoreNote">Demo: scored against the song's clean pattern, so a dropped beat that was correctly expected counts as right.</p>
+      </section>
+    </div>
+  </div>
+
+  <section class="panel" aria-labelledby="h-train">
+    <div class="head"><h2 id="h-train">What training showed</h2><span class="sub" id="trainSub"></span></div>
+    <div class="tablewrap"><table id="tblResults"></table></div>
+    <ul class="findings">
+      <li><b>The organ supplies the rhythm.</b> Without it no model learned the 20–60 tick rhythms in the same training (0.00). The 64-tick transformer reached 0.20 with four times the training; the GRU stayed at 0.</li>
+      <li><b>Attention supplies what is local.</b> The organ alone cannot predict fills (0.10); with attention on top they stay at 0.95. After a pattern change the pair also recovers better than the organ alone (0.55 against 0.42).</li>
+      <li><b>The lap choice does the work.</b> Handed three random laps instead of the three best-tuned ones, the same model falls to 0.13.</li>
+      <li><b>Gating the writes made no difference here</b> (0.91 either way). The organ's slow surprise matters for choosing laps, not for protecting the memory.</li>
+    </ul>
+    <p class="sub" id="trainNote"></p>
+  </section>
+
+  <section class="notes" aria-label="How it works and limits">
+    <div><h3>The organ</h3><p>Every tick, each ring compares the 8 bands with what it held one lap ago (the comparator), adds the mismatches to a slow surprise that fades over about 32 ticks, and rewrites its slot only while surprise is high. The three rings with the lowest surprise hand attention three tokens: what they expect next, what just mismatched, their surprise and their lap. Nothing in the organ is learned.</p></div>
+    <div><h3>The transformers</h3><p>Two layers, two heads, width 48, RoPE, attention over the last 12 ticks only. Same size, same training, same data. The organ model's attention can also read the three organ tokens at every layer. The weights on this page are the trained ones, run tick by tick in your browser.</p></div>
+    <div><h3>Limits</h3><p>Synthetic training rhythms only, so tapped rhythms and real audio are outside what the models saw and work less well. The organ's lap selection is hand-made (lowest surprise wins). The comparison is small-budget: bigger baselines trained for longer would likely learn more of the rhythm than they did here. Nothing here is new to the field; it shows what this organ does for a tiny model.</p></div>
+  </section>
+</div>
+
+<script>
+/*ENGINE*/
+</script>
+<script>
+const WEIGHTS = /*WEIGHTS*/;
+const RESULTS = /*RESULTS*/;
+</script>
+<script>
+(() => {
+  'use strict';
+  const { Organ, Tiny, LAPS, mulberry, C, W } = window.RingOrgan;
+  const $ = id => document.getElementById(id);
+  const HIST = 96, SCORE = 256, TICK = 125;
+  let source = 'demo', paused = false, fast = false, t = 0, seed = 7;
+  let organ, mOrg, mPl, song, rows = [], last = null, tapNow = new Uint8Array(C), audio = null;
+
+  // ---------- demo song ----------
+  function newSong() {
+    const r = mulberry(seed++), ri = n => Math.floor(r() * n);
+    const P = 20 + ri(41);
+    const pattern = () => { const p = Array.from({ length: P }, () => Uint8Array.from({ length: C }, (_, c) => c < 7 && r() < 0.12 ? 1 : 0)); p[ri(P)][ri(7)] = 1; return p; };
+    let pat = pattern(); const fills = new Map();
+    return { P, step(tt) {
+      if ($('chkChange').checked && tt > 0 && tt % 200 === 0) pat = pattern();
+      const clean = Uint8Array.from(pat[tt % P]), x = Uint8Array.from(clean);
+      if ($('chkDrop').checked) for (let c = 0; c < 7; c++) { if (x[c] && r() < 0.1) x[c] = 0; if (r() < 0.01) x[c] = 1; }
+      if (r() < 0.04) { fills.set(tt, 'start'); fills.set(tt + 2, 'cont'); fills.set(tt + 4, 'cont'); }
+      if (fills.has(tt)) { x[7] = 1; if (fills.get(tt) === 'cont') clean[7] = 1; fills.delete(tt); }
+      return { x, clean };
+    } };
+  }
+
+  // ---------- audio file: 8 band onsets per 125 ms ----------
+  function fft(re, im) {
+    const n = re.length;
+    for (let i = 1, j = 0; i < n; i++) { let b = n >> 1; for (; j & b; b >>= 1) j ^= b; j ^= b; if (i < j) { [re[i], re[j]] = [re[j], re[i]]; [im[i], im[j]] = [im[j], im[i]]; } }
+    for (let len = 2; len <= n; len <<= 1) { const a = -2 * Math.PI / len, wr = Math.cos(a), wi = Math.sin(a);
+      for (let i = 0; i < n; i += len) { let cr = 1, ci = 0; for (let k = 0; k < len / 2; k++) { const p = i + k, q = p + len / 2, tr = re[q] * cr - im[q] * ci, ti = re[q] * ci + im[q] * cr; re[q] = re[p] - tr; im[q] = im[p] - ti; re[p] += tr; im[p] += ti; const nr = cr * wr - ci * wi; ci = cr * wi + ci * wr; cr = nr; } } }
+  }
+  async function loadAudio(file) {
+    status('Decoding ' + file.name + '…');
+    const AC = window.AudioContext || window.webkitAudioContext, ac = new AC();
+    const buf = await ac.decodeAudioData(await file.arrayBuffer());
+    const sr = buf.sampleRate, ch = buf.getChannelData(0), hop = Math.round(sr * TICK / 1000), N = 2048;
+    const edges = [60, 150, 300, 600, 1200, 2400, 4800, 9600, 16000].map(f => Math.round(f / sr * N));
+    const frames = Math.floor((ch.length - N) / hop), E = [];
+    for (let f = 0; f < frames; f++) {
+      const re = new Float64Array(N), im = new Float64Array(N);
+      for (let i = 0; i < N; i++) re[i] = ch[f * hop + i] * (0.5 - 0.5 * Math.cos(2 * Math.PI * i / N));
+      fft(re, im);
+      E.push(Array.from({ length: C }, (_, b) => { let s = 0; for (let k = edges[b]; k < Math.max(edges[b] + 1, edges[b + 1]); k++) s += re[k] * re[k] + im[k] * im[k]; return Math.log(1e-9 + s); }));
+    }
+    const flux = E.map((e, f) => e.map((v, b) => f ? Math.max(0, v - E[f - 1][b]) : 0));
+    const ev = flux.map(() => new Uint8Array(C));
+    for (let b = 0; b < C; b++) {
+      const col = flux.map(r => r[b]), m = col.reduce((a, v) => a + v, 0) / col.length, sd = Math.sqrt(col.reduce((a, v) => a + (v - m) ** 2, 0) / col.length);
+      col.forEach((v, f) => { ev[f][b] = v > m + 1.5 * sd ? 1 : 0; });
+    }
+    const el = new Audio(URL.createObjectURL(file));
+    audio = { ev, el, frames };
+    reset();
+    status(`${file.name}: ${frames} ticks. Press Play to hear it; the models follow the sound.`);
+    $('btnPause').textContent = 'Play'; paused = true;
+  }
+
+  // ---------- one tick ----------
+  function reset() {
+    organ = new Organ(true); mOrg = new Tiny(WEIGHTS.organ, true); mPl = new Tiny(WEIGHTS.plain, false);
+    rows = []; last = null; t = 0;
+    if (source === 'demo') song = newSong();
+    $('kvTrueWrap').hidden = source !== 'demo';
+    draw();
+  }
+  function tick() {
+    let x, clean = null;
+    if (source === 'demo') ({ x, clean } = song.step(t));
+    else if (source === 'tap') { x = Uint8Array.from(tapNow); tapNow.fill(0); }
+    else { if (!audio) return; const f = Math.floor(audio.el.currentTime * 1000 / TICK); if (f >= audio.frames || audio.el.paused) return; x = audio.ev[f]; }
+    const row = { x, clean, pOrg: last ? last.pOrg : null, pPl: last ? last.pPl : null };
+    const o = organ.step(x);
+    const pOrg = mOrg.step(Array.from(x), o), pPl = mPl.step(Array.from(x), null);
+    last = { pOrg, pPl, laps: o.laps, Z: Float64Array.from(o.Z) };
+    rows.push(row); if (rows.length > SCORE) rows.shift();
+    t++;
+  }
+
+  // ---------- scoring ----------
+  function f1(rs, key, lo, hi) {
+    let tp = 0, np = 0, ny = 0;
+    for (const r of rs) { if (!r[key]) continue; const y = (source === 'demo' ? r.clean : r.x);
+      for (let c = lo; c < hi; c++) { const p = r[key][c] > 0.5 ? 1 : 0; tp += p & y[c]; np += p; ny += y[c]; } }
+    return ny + np ? (2 * tp / (np + ny)).toFixed(2) : '–';
+  }
+
+  // ---------- drawing ----------
+  let css = {};
+  const readCss = () => { const s = getComputedStyle(document.documentElement); for (const k of ['bg', 'panel', 'fg', 'muted', 'line', 'grid', 'ink', 'organ', 'plain', 'miss', 'fill', 'window', 'organ-soft']) css[k] = s.getPropertyValue('--' + k).trim(); };
+  function draw() {
+    readCss();
+    const cv = $('cStream'), g = cv.getContext('2d'), Wd = cv.width, Hh = cv.height;
+    g.clearRect(0, 0, Wd, Hh);
+    const left = 70, cw = (Wd - left - 10) / HIST, bh = 18, blockH = C * bh, gap = 50;
+    const shown = rows.slice(-HIST), off = HIST - shown.length;
+    const blocks = [['What happened', 'x'], ['Transformer + organ expected', 'pOrg'], ['Transformer alone expected', 'pPl']];
+    g.font = '600 22px ' + getComputedStyle(document.body).fontFamily;
+    blocks.forEach(([label, key], b) => {
+      const y0 = 30 + b * (blockH + gap);
+      g.fillStyle = css.fg; g.font = '600 24px Inter, system-ui, sans-serif'; g.textAlign = 'left'; g.fillText(label, 0, y0 - 12);
+      g.fillStyle = css.window; g.fillRect(Wd - 10 - W * cw, y0, W * cw, blockH);
+      for (let c = 0; c < C; c++) {
+        g.fillStyle = css.muted; g.font = '16px JetBrains Mono, monospace'; g.fillText(String(c + 1), 20, y0 + c * bh + 14);
+        g.fillStyle = css.grid; g.fillRect(left, y0 + c * bh + bh - 1, Wd - left - 10, 1);
+        shown.forEach((r, i) => {
+          const x0 = left + (off + i) * cw;
+          if (key === 'x') { if (r.x[c]) { g.fillStyle = c === 7 ? css.fill : css.ink; g.fillRect(x0 + 1, y0 + c * bh + 2, cw - 2, bh - 4); } return; }
+          const p = r[key]; if (!p || p[c] <= 0.5) return;
+          const y = (source === 'demo' && r.clean ? r.clean : r.x)[c];
+          if (y) { g.fillStyle = key === 'pOrg' ? css.organ : css.plain; g.fillRect(x0 + 1, y0 + c * bh + 2, cw - 2, bh - 4); }
+          else { g.strokeStyle = css.miss; g.lineWidth = 2; g.strokeRect(x0 + 2, y0 + c * bh + 3, cw - 4, bh - 6); }
+        });
+      }
+    });
+    g.fillStyle = css.muted; g.font = '20px Inter, system-ui, sans-serif'; g.textAlign = 'right';
+    g.fillText('attention window: 12 ticks', Wd - 12, Hh - 6);
+    g.textAlign = 'left'; g.fillText(`tick ${t}`, left, Hh - 6);
+
+    // comb
+    const cb = $('cComb'), h = cb.getContext('2d'), CW = cb.width, CH = cb.height;
+    h.clearRect(0, 0, CW, CH);
+    const L0 = 44, B = CH - 40, top = 16, bw = (CW - L0 - 10) / LAPS.length;
+    if (last) {
+      const Z = last.Z, zmax = Math.max(8, ...Z);
+      h.strokeStyle = css.grid; h.lineWidth = 1;
+      [0, 0.5, 1].forEach(f => { const y = B - f * (B - top); h.beginPath(); h.moveTo(L0, y); h.lineTo(CW - 10, y); h.stroke(); h.fillStyle = css.muted; h.font = '13px JetBrains Mono, monospace'; h.textAlign = 'right'; h.fillText((f * zmax).toFixed(0), L0 - 6, y + 4); });
+      LAPS.forEach((L, j) => {
+        const v = Z[j] / zmax, x0 = L0 + j * bw, chosen = last.laps.includes(L);
+        h.fillStyle = chosen ? css.organ : css.line; h.fillRect(x0 + 1, B - v * (B - top), bw - 2, Math.max(2, v * (B - top)));
+      });
+      if (source === 'demo' && song && song.P >= 13 && song.P <= 64) {
+        const x0 = L0 + (song.P - 13) * bw + bw / 2; h.fillStyle = css.fg;
+        h.beginPath(); h.moveTo(x0, B + 4); h.lineTo(x0 - 6, B + 14); h.lineTo(x0 + 6, B + 14); h.closePath(); h.fill();
+      }
+    }
+    h.fillStyle = css.muted; h.font = '13px JetBrains Mono, monospace'; h.textAlign = 'center';
+    [13, 20, 30, 40, 50, 64].forEach(L => h.fillText(String(L), L0 + (L - 13) * bw + bw / 2, CH - 8));
+    h.textAlign = 'right'; h.fillText('lap, ticks', CW - 10, CH - 24);
+
+    $('kvLaps').textContent = last ? last.laps.join(', ') : '–';
+    $('kvTrue').textContent = source === 'demo' && song ? song.P : '–';
+    $('kvShare').textContent = mOrg ? mOrg.share.map(s => Math.round(100 * s) + '%').join(' / ') : '–';
+    $('sOrgR').textContent = f1(rows, 'pOrg', 0, 7); $('sPlR').textContent = f1(rows, 'pPl', 0, 7);
+    $('sOrgF').textContent = f1(rows, 'pOrg', 7, 8); $('sPlF').textContent = f1(rows, 'pPl', 7, 8);
+  }
+
+  // ---------- results table ----------
+  function results() {
+    const M = RESULTS.models, s = RESULTS.setup;
+    const rows = [
+      ['Transformer, window 12', 'transformer, window 12', '2,500'],
+      ['Transformer, window 64', 'transformer, window 64', '2,500'],
+      ['Transformer, window 64', 'transformer, window 64 (10,000 steps)', '10,000'],
+      ['GRU, hidden 96', 'GRU, hidden 96', '2,500'],
+      ['GRU, hidden 96', 'GRU, hidden 96 (10,000 steps)', '10,000'],
+      ['Transformer, window 12 + ring organ', 'transformer, window 12 + ring organ (gated)', '2,500', true],
+      ['… organ that copies instead of gating its writes', 'transformer, window 12 + ring organ (plain copy)', '2,500'],
+      ['… organ that hands over 3 random laps', 'transformer, window 12 + organ with random laps', '2,500'],
+      ['Organ alone: best ring\u2019s echo, no model', "organ alone (gated): best ring's echo, no model", '–'],
+      ['Reference: knows the true period', 'reference: knows the true period, copies the clean last lap', '–'],
+    ].filter(r => M[r[1]]);
+    const cell = v => v == null ? '–' : v.toFixed(2);
+    let html = '<thead><tr><th>Model</th><th>Training steps</th><th>Rhythm bands 1–7</th><th>Fill band 8</th><th>After a pattern change</th><th>Parameters</th></tr></thead><tbody>';
+    for (const [label, k, steps, key] of rows) {
+      const r = M[k];
+      html += `<tr class="${key ? 'key' : ''}"><td>${label}</td><td class="n">${steps}</td><td class="n">${cell(r.rhythm_bands_F1_vs_clean)}</td><td class="n">${cell(r.fill_band_F1_vs_clean)}</td><td class="n">${cell(r.recovery_F1)}</td><td class="n">${r.params ? r.params.toLocaleString() : '–'}</td></tr>`;
+    }
+    $('tblResults').innerHTML = html + '</tbody>';
+    $('trainSub').textContent = `F1 of next-tick predictions on ${s.test} held-out songs; ${s.train.toLocaleString()} training songs`;
+    $('trainNote').textContent = 'Rhythm and fill columns are scored against the clean pattern after the first two periods. "After a pattern change" is scored against what actually happened in the two periods after the change. All transformers have the same width and layers, and every model the same data; the organ adds 912 parameters to read its tokens.';
+  }
+
+  // ---------- controls ----------
+  function status(s) { $('status').textContent = s; }
+  function setSource(s) {
+    source = s; ['Demo', 'Tap', 'Audio'].forEach(n => $('src' + n).setAttribute('aria-pressed', String(s === n.toLowerCase())));
+    $('pads').hidden = s !== 'tap'; $('fileWrap').hidden = s !== 'audio'; $('btnNew').hidden = s !== 'demo';
+    $('chkDrop').parentElement.hidden = s !== 'demo'; $('chkChange').parentElement.hidden = s !== 'demo';
+    $('scoreNote').textContent = s === 'demo' ? 'Demo: scored against the song’s clean pattern, so a dropped beat that was correctly expected counts as right.' : 'Scored against what actually happened.';
+    if (audio && s !== 'audio') audio.el.pause();
+    paused = s === 'audio'; $('btnPause').textContent = paused ? 'Play' : 'Pause';
+    reset();
+    status(s === 'demo' ? 'A new rhythm. After about two laps the organ finds its period; watch the organ model start expecting beats the plain model cannot see coming.'
+      : s === 'tap' ? 'Tap a short phrase on the pads or keys A S D F J K L ; and keep repeating it. Each tick is 125 ms. Repeat it the same way and the organ will lock on.'
+      : 'Choose an audio file. It is analysed into 8 bands of onsets in your browser and never leaves it.');
+  }
+  $('srcDemo').onclick = () => setSource('demo'); $('srcTap').onclick = () => setSource('tap'); $('srcAudio').onclick = () => setSource('audio');
+  $('btnNew').onclick = () => { reset(); status(`New song. Period ${song.P} ticks.`); };
+  $('btnPause').onclick = () => {
+    paused = !paused; $('btnPause').textContent = paused ? 'Play' : 'Pause';
+    if (source === 'audio' && audio) paused ? audio.el.pause() : audio.el.play().catch(() => {});
+  };
+  $('btnFast').onclick = () => { fast = !fast; $('btnFast').setAttribute('aria-pressed', String(fast)); };
+  $('file').onchange = e => { const f = e.target.files[0]; if (f) loadAudio(f).catch(err => status('Could not read that file: ' + err.message)); };
+  const keys = ['a', 's', 'd', 'f', 'j', 'k', 'l', ';'];
+  keys.forEach((k, c) => { const b = document.createElement('button'); b.textContent = `${c + 1} · ${k.toUpperCase()}`; b.onpointerdown = () => hit(c); $('pads').appendChild(b); });
+  function hit(c) { tapNow[c] = 1; const b = $('pads').children[c]; b.classList.add('lit'); setTimeout(() => b.classList.remove('lit'), 110); }
+  document.addEventListener('keydown', e => { if (source !== 'tap' || e.repeat) return; const c = keys.indexOf(e.key.toLowerCase()); if (c >= 0) { hit(c); e.preventDefault(); } });
+  matchMedia('(prefers-color-scheme: dark)').addEventListener('change', draw);
+  new MutationObserver(draw).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+  // ---------- start: open on a demo song already two laps in ----------
+  results();
+  setSource('demo');
+  for (let i = 0; i < 150; i++) tick();
+  draw();
+  setInterval(() => { if (paused) return; for (let i = 0; i < (fast && source === 'demo' ? 4 : 1); i++) tick(); draw(); }, TICK);
+})();
+</script>
